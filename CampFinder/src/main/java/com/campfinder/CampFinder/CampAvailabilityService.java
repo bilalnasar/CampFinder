@@ -1,4 +1,4 @@
-package com.campfinder.CampFinder.service;
+package com.campfinder.CampFinder;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,16 +34,8 @@ public class CampAvailabilityService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private static final Map<String, String> PARK_NAMES = new HashMap<>();
-    
-    static {
-        PARK_NAMES.put("-2147483460", "Algonquin Park");
-        PARK_NAMES.put("-2147483459", "Southeast Parks");
-        PARK_NAMES.put("-2147483461", "Southwest & Central Parks");
-        PARK_NAMES.put("-2147483462", "Near North Parks");
-        PARK_NAMES.put("-2147483463", "Northern Parks");
-    }
-
+    private List<String> previousAvailableParks = new ArrayList<>();
+   
     private static final String BASE_URL = "https://reservations.ontarioparks.ca/api/availability/map";
 
     @Scheduled(fixedRate = 300000) // Run every 5 minutes
@@ -82,12 +74,13 @@ public class CampAvailabilityService {
             
             if (availability == 0) {
                 // Site is available, send notification
-                String parkName = PARK_NAMES.getOrDefault(parkId, "Unknown Park");
+                String parkName = ParkNames.PARK_NAMES.getOrDefault(parkId, "Unknown Park");
                 availableParks.add(parkName + " (ID: " + parkId + ")");
             }
         }
-        if (!availableParks.isEmpty()) {
-            sendNotification( availableParks);
+        if (!availableParks.equals(previousAvailableParks)) {
+            sendNotification(availableParks);
+            previousAvailableParks = new ArrayList<>(availableParks);
         }
     }
 

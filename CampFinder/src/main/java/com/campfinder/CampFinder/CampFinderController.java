@@ -1,6 +1,5 @@
-package com.campfinder.CampFinder.controller;
+package com.campfinder.CampFinder;
 
-import com.campfinder.CampFinder.service.CampAvailabilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
