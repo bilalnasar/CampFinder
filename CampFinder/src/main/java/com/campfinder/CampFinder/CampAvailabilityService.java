@@ -13,8 +13,8 @@ import com.twilio.type.PhoneNumber;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 @Service
 public class CampAvailabilityService {
@@ -34,11 +34,11 @@ public class CampAvailabilityService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private List<String> previousAvailableParks = new ArrayList<>();
+    private Map<String, List<String>> previousAvailableParks = new HashMap<>();
    
     private static final String BASE_URL = "https://reservations.ontarioparks.ca/api/availability/map";
 
-    @Scheduled(fixedRate = 300000) // Run every 5 minutes
+    @Scheduled(fixedRate = 50000) // Run every 30 secs
     public void checkAvailability() {
         String url = buildUrl(-2147483464, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -65,22 +65,55 @@ public class CampAvailabilityService {
 
     private void processResponse(Map<String, Object> response) {
         Map<String, Object> mapLinkAvailabilities = (Map<String, Object>) response.get("mapLinkAvailabilities");
-        List<String> availableParks = new ArrayList<>();
+        Map<String, List<String>> availableParks = new HashMap<>();
         
         for (Map.Entry<String, Object> entry : mapLinkAvailabilities.entrySet()) {
             String parkId = entry.getKey();
             int availability = ((Integer) ((java.util.ArrayList) entry.getValue()).get(0));
-           // System.out.println(mapLinkAvailabilities);
             
             if (availability == 0) {
                 // Site is available, send notification
                 String parkName = ParkNames.PARK_NAMES.getOrDefault(parkId, "Unknown Park");
-                availableParks.add(parkName + " (ID: " + parkId + ")");
+                if ("Near North Parks".equals(parkName)) {
+                    processParks(availableParks, -2147483462, parkName);
+                } else if ("Southeast Parks".equals(parkName)) {
+                    processParks(availableParks, -2147483459, parkName);
+                } else if ("Algonquin Park".equals(parkName)) {
+                    processParks(availableParks, -2147483460, parkName);
+                } else {
+                    availableParks.computeIfAbsent("Other Parks", k -> new ArrayList<>()).add(parkName);
+                }
             }
         }
         if (!availableParks.equals(previousAvailableParks)) {
             sendNotification(availableParks);
-            previousAvailableParks = new ArrayList<>(availableParks);
+            previousAvailableParks = new HashMap<>(availableParks);
+        }
+    }
+
+    private void processParks(Map<String, List<String>> availableParks, int mapId, String parentPark) {
+        String url = buildUrl(mapId, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        
+        if (response != null) {
+            Map<String, Object> mapLinkAvailabilities = (Map<String, Object>) response.get("mapLinkAvailabilities");
+            
+            for (Map.Entry<String, Object> entry : mapLinkAvailabilities.entrySet()) {
+                String parkId = entry.getKey();
+                int availability = ((Integer) ((java.util.ArrayList) entry.getValue()).get(0));
+                
+                
+                if (availability == 0) {
+                    String parkName = ParkNames.PARK_NAMES.getOrDefault(parkId, "Unknown Park");
+                    if (parentPark.equals("Algonquin Park") && parkName.equals("Unknown Park")) {
+                        parkName = "Backcountry";
+                    }
+                    if (parkName.equals("Mississagi") || parkName.equals("Chutes") || parkName.equals("Kap-Kig-Iwan")) {
+                        return;
+                    }                    
+                    availableParks.computeIfAbsent(parentPark, k -> new ArrayList<>()).add(parkName);
+                }
+            }
         }
     }
 
@@ -104,17 +137,22 @@ public class CampAvailabilityService {
         }
     }
 
-    private void sendNotification(List<String> availableParks) {
+    private void sendNotification(Map<String, List<String>> availableParks) {
         Twilio.init(twilioAccountSid, twilioAuthToken);
         
-        String messageBody = "The current available parks are:\n" + String.join("\n", availableParks);
+        StringBuilder messageBody = new StringBuilder("The current available parks are:\n");
+        for (Map.Entry<String, List<String>> entry : availableParks.entrySet()) {
+            messageBody.append(entry.getKey()).append(":\n");
+            for (String park : entry.getValue()) {
+                messageBody.append("  - ").append(park).append("\n");
+            }
+        }
         
-        // TODO: Replace with actual recipient phone number
 
         Message message = Message.creator(
             new PhoneNumber(toPhoneNumber),
             new PhoneNumber(twilioPhoneNumber),
-            messageBody)
+            messageBody.toString())
         .create();
     
         System.out.println("Sent message SID: " + message.getSid());
