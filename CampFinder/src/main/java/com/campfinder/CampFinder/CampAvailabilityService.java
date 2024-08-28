@@ -35,19 +35,18 @@ public class CampAvailabilityService {
     private RestTemplate restTemplate;
 
     private Map<String, List<String>> previousAvailableParks = new HashMap<>();
-   
+
     private static final String BASE_URL = "https://reservations.ontarioparks.ca/api/availability/map";
 
     @Scheduled(fixedRate = 50000) // Run every 30 secs
     public void checkAvailability() {
         String url = buildUrl(-2147483464, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-        
+
         if (response != null) {
             processResponse(response);
         }
     }
-
 
     private String buildUrl(int mapId, LocalDate startDate, LocalDate endDate) {
         return UriComponentsBuilder.fromHttpUrl(BASE_URL)
@@ -66,11 +65,11 @@ public class CampAvailabilityService {
     private void processResponse(Map<String, Object> response) {
         Map<String, Object> mapLinkAvailabilities = (Map<String, Object>) response.get("mapLinkAvailabilities");
         Map<String, List<String>> availableParks = new HashMap<>();
-        
+
         for (Map.Entry<String, Object> entry : mapLinkAvailabilities.entrySet()) {
             String parkId = entry.getKey();
             int availability = ((Integer) ((java.util.ArrayList) entry.getValue()).get(0));
-            
+
             if (availability == 0) {
                 // Site is available, send notification
                 String parkName = ParkNames.PARK_NAMES.getOrDefault(parkId, "Unknown Park");
@@ -80,13 +79,18 @@ public class CampAvailabilityService {
                     processParks(availableParks, -2147483459, parkName);
                 } else if ("Algonquin Park".equals(parkName)) {
                     processParks(availableParks, -2147483460, parkName);
+                } else if ("Southwest & Central Parks".equals(parkName)) {
+                    processParks(availableParks, -2147483461, parkName);
+                } else if ("Northern Parks".equals(parkName)) {
                 } else {
                     availableParks.computeIfAbsent("Other Parks", k -> new ArrayList<>()).add(parkName);
                 }
             }
         }
         if (!availableParks.equals(previousAvailableParks)) {
-            sendNotification(availableParks);
+            if (!availableParks.isEmpty()) {
+                sendNotification(availableParks);
+            }
             previousAvailableParks = new HashMap<>(availableParks);
         }
     }
@@ -94,15 +98,14 @@ public class CampAvailabilityService {
     private void processParks(Map<String, List<String>> availableParks, int mapId, String parentPark) {
         String url = buildUrl(mapId, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-        
+
         if (response != null) {
             Map<String, Object> mapLinkAvailabilities = (Map<String, Object>) response.get("mapLinkAvailabilities");
-            
+
             for (Map.Entry<String, Object> entry : mapLinkAvailabilities.entrySet()) {
                 String parkId = entry.getKey();
                 int availability = ((Integer) ((java.util.ArrayList) entry.getValue()).get(0));
-                
-                
+
                 if (availability == 0) {
                     String parkName = ParkNames.PARK_NAMES.getOrDefault(parkId, "Unknown Park");
                     if (parentPark.equals("Algonquin Park") && parkName.equals("Unknown Park")) {
@@ -110,7 +113,7 @@ public class CampAvailabilityService {
                     }
                     if (parkName.equals("Mississagi") || parkName.equals("Chutes") || parkName.equals("Kap-Kig-Iwan")) {
                         return;
-                    }                    
+                    }
                     availableParks.computeIfAbsent(parentPark, k -> new ArrayList<>()).add(parkName);
                 }
             }
@@ -120,18 +123,19 @@ public class CampAvailabilityService {
     public void checkCampsiteAvailability(int mapId, LocalDate startDate, LocalDate endDate) {
         String url = buildUrl(mapId, startDate, endDate);
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-        
+
         if (response != null) {
             Map<String, Object> resourceAvailabilities = (Map<String, Object>) response.get("resourceAvailabilities");
-            
+
             for (Map.Entry<String, Object> entry : resourceAvailabilities.entrySet()) {
                 String siteId = entry.getKey();
-                Map<String, Object> availabilityInfo = (Map<String, Object>) ((java.util.ArrayList) entry.getValue()).get(0);
+                Map<String, Object> availabilityInfo = (Map<String, Object>) ((java.util.ArrayList) entry.getValue())
+                        .get(0);
                 int availability = (int) availabilityInfo.get("availability");
-                
+
                 if (availability == 0) {
                     // Site is available, send notification
-                    //sendNotification(String.valueOf(mapId), siteId);
+                    // sendNotification(String.valueOf(mapId), siteId);
                 }
             }
         }
@@ -139,7 +143,7 @@ public class CampAvailabilityService {
 
     private void sendNotification(Map<String, List<String>> availableParks) {
         Twilio.init(twilioAccountSid, twilioAuthToken);
-        
+
         StringBuilder messageBody = new StringBuilder("The current available parks are:\n");
         for (Map.Entry<String, List<String>> entry : availableParks.entrySet()) {
             messageBody.append(entry.getKey()).append(":\n");
@@ -147,14 +151,13 @@ public class CampAvailabilityService {
                 messageBody.append("  - ").append(park).append("\n");
             }
         }
-        
 
         Message message = Message.creator(
-            new PhoneNumber(toPhoneNumber),
-            new PhoneNumber(twilioPhoneNumber),
-            messageBody.toString())
-        .create();
-    
+                new PhoneNumber(toPhoneNumber),
+                new PhoneNumber(twilioPhoneNumber),
+                messageBody.toString())
+                .create();
+
         System.out.println("Sent message SID: " + message.getSid());
     }
 

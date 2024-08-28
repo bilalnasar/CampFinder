@@ -63,6 +63,42 @@ public class ParkNames {
         PARK_NAMES.put("-2147483317", "Pog Lake & Kearney Lake");
         PARK_NAMES.put("-2147483264", "Rock Lake & Raccoon Lake");
 
+        //Southwest & Central Parks
+        PARK_NAMES.put("-2147483154", "Wheatley");
+        PARK_NAMES.put("-2147483254", "Rondeau");
+        PARK_NAMES.put("-2147483307", "Port Burwell");
+        PARK_NAMES.put("-2147483408", "Long Point");
+        PARK_NAMES.put("-2147483170", "Turkey Point");
+        PARK_NAMES.put("-2147483221", "Selkirk");
+        PARK_NAMES.put("-2147483260", "Rock Point");
+        PARK_NAMES.put("-2147483572", "Bronte Creek");
+        PARK_NAMES.put("-2147483540", "Darlington");
+        PARK_NAMES.put("-2147483441", "Kawartha Highlands");
+        PARK_NAMES.put("-2147483614", "Balsam Lake");
+        PARK_NAMES.put("-2147483518", "Emily");
+        PARK_NAMES.put("-2147483210", "Sibbald Point");
+        PARK_NAMES.put("-2147483381", "McRae Point");
+        PARK_NAMES.put("-2147483390", "Mara");
+        PARK_NAMES.put("-2147483602", "Bass Lake");
+        PARK_NAMES.put("-2147483623", "Awenda");
+        PARK_NAMES.put("-2147483019", "Wasaga Beach");
+        PARK_NAMES.put("-2147483546", "Craigleith");
+        PARK_NAMES.put("-2147483531", "Earl Rowe");
+        PARK_NAMES.put("-2147483059", "Mono Cliffs");
+        PARK_NAMES.put("-2147483062", "Forks of the Credit");
+        PARK_NAMES.put("-2147483225", "Sauble Falls");
+        PARK_NAMES.put("-2147483404", "MacGregor Point");
+        PARK_NAMES.put("-2147483458", "Inverhuron");
+        PARK_NAMES.put("-2147483311", "Point Farms");
+        PARK_NAMES.put("-2147483334", "Pinery");
+        
+
+
+
+
+
+
+
 
 
 
