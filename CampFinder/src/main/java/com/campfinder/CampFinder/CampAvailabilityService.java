@@ -16,6 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+
 @Service
 public class CampAvailabilityService {
 
@@ -38,10 +43,23 @@ public class CampAvailabilityService {
 
     private static final String BASE_URL = "https://reservations.ontarioparks.ca/api/availability/map";
 
+    private HttpEntity<String> createHttpEntityWithHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36");
+        headers.set("Accept-Language", "en-US,en;q=0.5");
+        headers.set("Connection", "keep-alive");
+
+        return new HttpEntity<>(headers);
+    }
+
     @Scheduled(fixedRate = 50000) // Run every 30 secs
     public void checkAvailability() {
         String url = buildUrl(-2147483464, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        HttpEntity<String> entity = createHttpEntityWithHeaders();
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+        Map<String, Object> response = responseEntity.getBody();
 
         if (response != null) {
             processResponse(response);
@@ -97,7 +115,10 @@ public class CampAvailabilityService {
 
     private void processParks(Map<String, List<String>> availableParks, int mapId, String parentPark) {
         String url = buildUrl(mapId, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        HttpEntity<String> entity = createHttpEntityWithHeaders();
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+        Map<String, Object> response = responseEntity.getBody();
 
         if (response != null) {
             Map<String, Object> mapLinkAvailabilities = (Map<String, Object>) response.get("mapLinkAvailabilities");
