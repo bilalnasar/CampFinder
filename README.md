@@ -12,7 +12,6 @@ CampFinder is a Spring Boot application designed to check and notify users about
 ## Prerequisites
 
 - Java 17 or higher
-- Maven
 - Twilio account for SMS notifications
 
 ## Setup
