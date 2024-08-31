@@ -74,6 +74,7 @@
                 </execution>
             </executions>
             <configuration>
+                <skip>true</skip>
                 <repository>campfinder</repository>
                 <tag>${project.version}</tag>
                 <buildArgs>

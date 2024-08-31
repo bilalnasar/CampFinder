@@ -1,7 +1,6 @@
 package com.campfinder.CampFinder;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -15,6 +14,10 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +46,31 @@ public class CampAvailabilityService {
 
     private static final String BASE_URL = "https://reservations.ontarioparks.ca/api/availability/map";
 
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private boolean isCheckingAvailability = false;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledFuture<?> scheduledTask;
+
+    public void startAvailabilityCheck(LocalDate startDate, LocalDate endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+
+        if (isCheckingAvailability) {
+            stopAvailabilityCheck();
+        }
+
+        isCheckingAvailability = true;
+        scheduledTask = scheduler.scheduleAtFixedRate(this::checkAvailability, 0, 50, TimeUnit.SECONDS);
+    }
+
+    public void stopAvailabilityCheck() {
+        if (scheduledTask != null) {
+            scheduledTask.cancel(false);
+        }
+        isCheckingAvailability = false;
+    }
+
     private HttpEntity<String> createHttpEntityWithHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent",
@@ -53,9 +81,11 @@ public class CampAvailabilityService {
         return new HttpEntity<>(headers);
     }
 
-    @Scheduled(fixedRate = 50000) // Run every 30 secs
     public void checkAvailability() {
-        String url = buildUrl(-2147483464, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
+        if (startDate == null || endDate == null) {
+            return; // Don't run if dates are not set
+        }
+        String url = buildUrl(-2147483464, startDate, endDate);
         HttpEntity<String> entity = createHttpEntityWithHeaders();
         ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
 

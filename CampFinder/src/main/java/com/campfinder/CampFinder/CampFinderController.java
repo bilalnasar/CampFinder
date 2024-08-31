@@ -16,11 +16,16 @@ public class CampFinderController {
 
     @GetMapping("/check-availability")
     public String checkAvailability(
-            @RequestParam int mapId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
-                return "Checking availability for mapId: " + mapId + 
-                       ", from " + startDate + " to " + endDate;
-            }
+        campAvailabilityService.startAvailabilityCheck(startDate, endDate);
+        return "Checking availability for mapId: " +
+                ", from " + startDate + " to " + endDate;
+    }
+
+    @GetMapping("/stop-availability-check")
+    public String stopAvailabilityCheck() {
+        campAvailabilityService.stopAvailabilityCheck();
+        return "Availability check stopped";
+    }
 }
