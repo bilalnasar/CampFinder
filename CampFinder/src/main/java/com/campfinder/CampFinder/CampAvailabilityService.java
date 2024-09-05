@@ -48,13 +48,15 @@ public class CampAvailabilityService {
 
     private LocalDate startDate;
     private LocalDate endDate;
+    private List<String> parks;
     private boolean isCheckingAvailability = false;
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> scheduledTask;
 
-    public void startAvailabilityCheck(LocalDate startDate, LocalDate endDate) {
+    public void startAvailabilityCheck(LocalDate startDate, LocalDate endDate, List<String> parks) {
         this.startDate = startDate;
         this.endDate = endDate;
+        this.parks = parks;
 
         if (isCheckingAvailability) {
             stopAvailabilityCheck();
@@ -162,8 +164,8 @@ public class CampAvailabilityService {
                     if (parentPark.equals("Algonquin Park") && parkName.equals("Unknown Park")) {
                         parkName = "Backcountry";
                     }
-                    if (parkName.equals("Mississagi") || parkName.equals("Chutes") || parkName.equals("Kap-Kig-Iwan")) {
-                        return;
+                    if (parks != null && !parks.isEmpty() && !parks.contains(parkName)) {
+                        continue;
                     }
                     availableParks.computeIfAbsent(parentPark, k -> new ArrayList<>()).add(parkName);
                 }

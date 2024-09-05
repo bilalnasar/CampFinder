@@ -5,6 +5,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+
 
 import java.time.LocalDate;
 
@@ -17,9 +19,10 @@ public class CampFinderController {
     @GetMapping("/check-availability")
     public String checkAvailability(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        campAvailabilityService.startAvailabilityCheck(startDate, endDate);
-        return "Checking availability for mapId: " +
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) List<String> parks) {
+        campAvailabilityService.startAvailabilityCheck(startDate, endDate, parks);
+        return "Checking availability for: " + parks +
                 ", from " + startDate + " to " + endDate;
     }
 
