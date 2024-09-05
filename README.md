@@ -74,3 +74,12 @@ You can also run the application using Docker:
    ```
    docker run -p 8080:8080 campfinder
    ```
+
+## Using the Frontend
+
+If you want to use the frontend, you can run it using npm (make sure that the backend is running on http://localhost:8080):
+
+1. cd campfinder-frontend
+2. npm install
+3. npm start
+4. Open http://localhost:3000 in your browser
