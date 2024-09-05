@@ -49,11 +49,11 @@ CampFinder is a Spring Boot application designed to check and notify users about
 
 1. Start an availability check:
    ```
-   GET http://localhost:8080/check-availability?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+   GET http://localhost:8080/check-availability?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&parks=Park1
    ```
-   Replace YYYY-MM-DD with your desired start and end dates. For example:
+   Replace YYYY-MM-DD with your desired start and end dates and parks with the names of the parks you want to check. For example:
    ```
-   GET http://localhost:8080/check-availability?startDate=2024-08-31&endDate=2024-09-02
+   GET http://localhost:8080/check-availability?startDate=2024-08-31&endDate=2024-09-02&parks=Killbear&parks=Chutes
    ```
 
 2. Stop the availability check:
