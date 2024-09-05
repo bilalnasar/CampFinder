@@ -144,7 +144,7 @@ public class CampAvailabilityService {
     }
 
     private void processParks(Map<String, List<String>> availableParks, int mapId, String parentPark) {
-        String url = buildUrl(mapId, LocalDate.of(2024, 8, 31), LocalDate.of(2024, 9, 2));
+        String url = buildUrl(mapId, startDate, endDate);
         HttpEntity<String> entity = createHttpEntityWithHeaders();
         ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
 
@@ -166,27 +166,6 @@ public class CampAvailabilityService {
                         return;
                     }
                     availableParks.computeIfAbsent(parentPark, k -> new ArrayList<>()).add(parkName);
-                }
-            }
-        }
-    }
-
-    public void checkCampsiteAvailability(int mapId, LocalDate startDate, LocalDate endDate) {
-        String url = buildUrl(mapId, startDate, endDate);
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-
-        if (response != null) {
-            Map<String, Object> resourceAvailabilities = (Map<String, Object>) response.get("resourceAvailabilities");
-
-            for (Map.Entry<String, Object> entry : resourceAvailabilities.entrySet()) {
-                String siteId = entry.getKey();
-                Map<String, Object> availabilityInfo = (Map<String, Object>) ((java.util.ArrayList) entry.getValue())
-                        .get(0);
-                int availability = (int) availabilityInfo.get("availability");
-
-                if (availability == 0) {
-                    // Site is available, send notification
-                    // sendNotification(String.valueOf(mapId), siteId);
                 }
             }
         }
